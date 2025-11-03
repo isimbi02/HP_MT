@@ -1,3 +1,4 @@
+# HP_MT
 # Health Tracker System
 
 A comprehensive healthcare management system for tracking patient enrollments, program sessions, medication dispensations, and attendance records.
@@ -79,6 +80,7 @@ NEXT_PUBLIC_API_URL=http://localhost:3001
 Ensure PostgreSQL is running and create the database:
 
 ```sql
+
 CREATE DATABASE health_tracker;
 ```
 
@@ -123,7 +125,7 @@ HP_MT/
 │   │   ├── auth/          # Authentication & authorization
 │   │   ├── users/         # User management
 │   │   ├── patients/      # Patient records
-│   │   ├── programs/      # Health programs
+│   │   ├── programs/     # Health programs
 │   │   ├── enrollments/   # Patient enrollments
 │   │   ├── sessions/       # Session attendance records
 │   │   ├── medications/   # Medication management
@@ -173,7 +175,3 @@ http://localhost:3001/api/docs
 - **Database connection errors**: Verify PostgreSQL is running and `.env` credentials are correct
 - **CORS errors**: Ensure `FRONTEND_URL` in backend `.env` matches your frontend URL
 - **Port conflicts**: Change `PORT` in backend `.env` or frontend dev server port
-
-## 📄 License
-
-This project is private/proprietary.
