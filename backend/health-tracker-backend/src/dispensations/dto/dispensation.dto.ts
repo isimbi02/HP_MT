@@ -1,11 +1,12 @@
 // ========== dispensations/dto/dispensation.dto.ts ==========
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber} from 'class-validator';
 
 export class CreateDispensationDto {
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  enrollmentId: string;
+  enrollmentId?: string;
 
   @ApiProperty()
   @IsString()
@@ -19,16 +20,22 @@ export class CreateDispensationDto {
   @IsNumber()
   quantity: number;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  patientId?: string;
+
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   notes?: string;
 }
 
 export class CheckEligibilityDto {
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  enrollmentId: string;
+  enrollmentId?: string;
 
   @ApiProperty()
   @IsString()
@@ -37,4 +44,9 @@ export class CheckEligibilityDto {
   @ApiProperty()
   @IsString()
   dispensedDate: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  patientId?: string;
 }

@@ -21,26 +21,26 @@ export function StatCard({ title, value, subtitle, icon, trend, color = 'blue' }
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all duration-200">
+    <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-gray-800 dark:to-gray-700 rounded-2xl shadow-lg border border-blue-200 dark:border-gray-600 p-6 hover:shadow-xl transition-all duration-300 hover:scale-105">
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">{title}</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{value}</p>
-          {subtitle && <p className="text-sm text-gray-600 mt-1">{subtitle}</p>}
+          <p className="text-sm font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide">{title}</p>
+          <p className="text-4xl font-bold text-gray-900 dark:text-gray-100 mt-3">{value}</p>
+          {subtitle && <p className="text-sm text-blue-600 dark:text-blue-400 mt-2 font-medium">{subtitle}</p>}
           {trend && (
-            <div className="mt-3 flex items-center gap-1">
+            <div className="mt-4 flex items-center gap-1">
               <span className={cn(
-                'text-xs font-semibold',
-                trend.isPositive ? 'text-green-600' : 'text-red-600'
+                'text-xs font-semibold px-2 py-1 rounded',
+                trend.isPositive ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100'
               )}>
                 {trend.isPositive ? '↑' : '↓'} {trend.value}
               </span>
-              <span className="text-xs text-gray-500">vs last period</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">vs last period</span>
             </div>
           )}
         </div>
         <div className={cn(
-          'w-14 h-14 rounded-2xl flex items-center justify-center text-3xl bg-gradient-to-br shadow-lg',
+          'w-16 h-16 rounded-xl flex items-center justify-center text-3xl bg-white dark:bg-gray-800 shadow-md',
           colors[color]
         )}>
           {icon}

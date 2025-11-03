@@ -27,8 +27,8 @@ export function getStatusColor(status: string): string {
     ongoing: 'bg-blue-100 text-blue-800',
     completed: 'bg-green-100 text-green-800',
     cancelled: 'bg-red-100 text-red-800',
-    attended: 'bg-green-100 text-green-800',
-    missed: 'bg-red-100 text-red-800',
+    attended: 'bg-green-100 text-green-800 border-2 border-green-500',
+    missed: 'bg-red-100 text-red-800 border-2 border-red-500',
     active: 'bg-green-100 text-green-800',
     inactive: 'bg-gray-100 text-gray-800',
   };

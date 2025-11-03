@@ -92,21 +92,6 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
-
-      {/* Demo Credentials */}
-      <div className="mt-6 bg-white/60 backdrop-blur rounded-2xl p-6 border border-white/80">
-        <p className="text-xs font-bold text-gray-700 mb-3">🔑 Demo Credentials</p>
-        <div className="space-y-2 text-xs">
-          <div className="flex justify-between items-center bg-white rounded-lg px-3 py-2">
-            <span className="text-gray-600">Admin:</span>
-            <span className="font-mono text-gray-900">admin@healthtracker.com</span>
-          </div>
-          <div className="flex justify-between items-center bg-white rounded-lg px-3 py-2">
-            <span className="text-gray-600">Password:</span>
-            <span className="font-mono text-gray-900">Admin@123</span>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

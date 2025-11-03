@@ -36,6 +36,13 @@ export class MedicationsController {
     return this.medicationsService.findByProgram(programId);
   }
 
+  @Get('patient/:patientId')
+  @ApiOperation({ summary: 'Get medications by patient ID' })
+  @ApiResponse({ status: 200, description: 'Medications retrieved successfully' })
+  findByPatient(@Param('patientId') patientId: string) {
+    return this.medicationsService.findByPatient(patientId);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get medication by ID' })
   @ApiResponse({ status: 200, description: 'Medication retrieved successfully' })

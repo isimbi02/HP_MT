@@ -19,7 +19,7 @@ export class MedicationsService {
 
   async findAll(): Promise<Medication[]> {
     return await this.medicationsRepository.find({
-      relations: ['program'],
+      relations: ['program', 'patient', 'prescribedBy'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -27,6 +27,15 @@ export class MedicationsService {
   async findByProgram(programId: string): Promise<Medication[]> {
     return await this.medicationsRepository.find({
       where: { programId, isActive: true },
+      relations: ['program', 'patient', 'prescribedBy'],
+    });
+  }
+
+  async findByPatient(patientId: string): Promise<Medication[]> {
+    return await this.medicationsRepository.find({
+      where: { patientId, isActive: true },
+      relations: ['program', 'patient', 'prescribedBy'],
+      order: { createdAt: 'DESC' },
     });
   }
 

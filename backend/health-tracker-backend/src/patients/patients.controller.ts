@@ -1,5 +1,5 @@
-// ========== patients/patients.controller.ts ==========
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
+// ========== patients/patients.controller.ts (UPDATED) ==========
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, Request } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { PatientsService } from './patients.service';
@@ -23,9 +23,12 @@ export class PatientsController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all patients' })
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
+  @ApiOperation({ summary: 'Get all patients (Admin and Staff get all, optional search)' })
   @ApiResponse({ status: 200, description: 'Patients retrieved successfully' })
   findAll(@Query('search') search?: string) {
+    // For admin and staff, if no search query, return ALL patients
+    // If search query provided, filter by search term
     return this.patientsService.findAll(search);
   }
 

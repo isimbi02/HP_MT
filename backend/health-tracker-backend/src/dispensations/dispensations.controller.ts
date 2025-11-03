@@ -44,4 +44,11 @@ export class DispensationsController {
   findByEnrollment(@Param('enrollmentId') enrollmentId: string) {
     return this.dispensationsService.findByEnrollment(enrollmentId);
   }
+
+  @Get('patient/:patientId')
+  @ApiOperation({ summary: 'Get dispensations by patient ID' })
+  @ApiResponse({ status: 200, description: 'Dispensations retrieved successfully' })
+  findByPatient(@Param('patientId') patientId: string) {
+    return this.dispensationsService.findByPatient(patientId);
+  }
 }

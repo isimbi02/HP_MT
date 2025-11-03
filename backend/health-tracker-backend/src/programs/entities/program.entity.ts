@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { Enrollment } from '../../enrollments/entities/enrollment.entity';
 import { Medication } from '../../medications/entities/medication.entity';
+import { ProgramSession } from '../../program-sessions/entities/program-sessions.entity';
 
 export enum SessionType {
   ONE_ON_ONE = 'one_on_one',
@@ -56,6 +57,9 @@ export class Program {
 
   @OneToMany(() => Medication, (medication) => medication.program)
   medications: Medication[];
+
+  @OneToMany(() => ProgramSession, (session) => session.program)
+  sessions: ProgramSession[];
 
   @CreateDateColumn()
   createdAt: Date;

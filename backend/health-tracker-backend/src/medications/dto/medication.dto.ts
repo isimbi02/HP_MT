@@ -1,6 +1,6 @@
 // ========== medications/dto/medication.dto.ts ==========
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsOptional, IsBoolean, IsEnum } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsOptional, IsBoolean, IsEnum, IsDateString } from 'class-validator';
 
 export enum Frequency {
   DAILY = 'daily',
@@ -21,14 +21,30 @@ export class CreateMedicationDto {
   @IsEnum(Frequency)
   frequency: Frequency;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   instructions?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  programId: string;
+  programId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  patientId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
+  endDate?: string;
 }
 
 export class UpdateMedicationDto {

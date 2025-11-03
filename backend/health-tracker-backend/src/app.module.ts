@@ -11,6 +11,9 @@ import { SessionsModule } from './sessions/sessions.module';
 import { MedicationsModule } from './medications/medications.module';
 import { DispensationsModule } from './dispensations/dispensations.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { ProgramSessionsModule } from './program-sessions/program-sessions.module';
+import { SessionBookingsModule } from './session-bookings/session-bookings.module';
+import { ActivityLogsModule } from './activity-logs/activity-logs.module';
 
 @Module({
   imports: [
@@ -46,6 +49,9 @@ import { DashboardModule } from './dashboard/dashboard.module';
     MedicationsModule,
     DispensationsModule,
     DashboardModule,
+    ProgramSessionsModule,
+    SessionBookingsModule,
+    ActivityLogsModule,
   ],
 })
 export class AppModule {}

@@ -144,6 +144,8 @@ export const api = {
     getOne: (id: string) => fetchApi(`/medications/${id}`),
     getByProgram: (programId: string) =>
       fetchApi(`/medications/program/${programId}`),
+    getByPatient: (patientId: string) =>
+      fetchApi(`/medications/patient/${patientId}`),
     create: (data: any) =>
       fetchApi('/medications', {
         method: 'POST',
@@ -165,6 +167,8 @@ export const api = {
     getAll: () => fetchApi('/dispensations'),
     getByEnrollment: (enrollmentId: string) =>
       fetchApi(`/dispensations/enrollment/${enrollmentId}`),
+    getByPatient: (patientId: string) =>
+      fetchApi(`/dispensations/patient/${patientId}`),
     checkEligibility: (data: any) =>
       fetchApi('/dispensations/check-eligibility', {
         method: 'POST',
@@ -179,9 +183,98 @@ export const api = {
 
   // Dashboard
   dashboard: {
+    getDashboard: () => fetchApi('/dashboard'),
     getStats: () => fetchApi('/dashboard/stats'),
     getAlerts: () => fetchApi('/dashboard/alerts'),
     getRecentActivity: () => fetchApi('/dashboard/recent-activity'),
+    getCharts: () => fetchApi('/dashboard/charts'),
+    getPatientDashboard: () => fetchApi('/dashboard/patient-dashboard'),
+    exportProgress: (patientId: string) => {
+      const token = localStorage.getItem('token');
+      return fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/dashboard/export-progress/${patientId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }).then((res) => res.blob());
+    },
+  },
+
+  // Program Sessions
+  programSessions: {
+    getAll: (programId?: string, upcomingOnly?: boolean) => {
+      const params = new URLSearchParams();
+      if (programId) params.append('programId', programId);
+      if (upcomingOnly) params.append('upcomingOnly', 'true');
+      return fetchApi(`/program-sessions?${params.toString()}`);
+    },
+    getAvailable: (programId?: string) => {
+      const params = new URLSearchParams();
+      if (programId) params.append('programId', programId);
+      return fetchApi(`/program-sessions/available?${params.toString()}`);
+    },
+    getOne: (id: string) => fetchApi(`/program-sessions/${id}`),
+    create: (data: any) =>
+      fetchApi('/program-sessions', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    update: (id: string, data: any) =>
+      fetchApi(`/program-sessions/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
+    delete: (id: string) =>
+      fetchApi(`/program-sessions/${id}`, {
+        method: 'DELETE',
+      }),
+  },
+
+  // Session Bookings
+  sessionBookings: {
+    getAll: (userId?: string, patientId?: string, sessionId?: string) => {
+      const params = new URLSearchParams();
+      if (userId) params.append('userId', userId);
+      if (patientId) params.append('patientId', patientId);
+      if (sessionId) params.append('sessionId', sessionId);
+      return fetchApi(`/session-bookings?${params.toString()}`);
+    },
+    getMyBookings: () => fetchApi('/session-bookings/my-bookings'),
+    getOne: (id: string) => fetchApi(`/session-bookings/${id}`),
+    create: (data: any) =>
+      fetchApi('/session-bookings', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    update: (id: string, data: any) =>
+      fetchApi(`/session-bookings/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
+    cancel: (id: string) =>
+      fetchApi(`/session-bookings/${id}/cancel`, {
+        method: 'POST',
+      }),
+    delete: (id: string) =>
+      fetchApi(`/session-bookings/${id}`, {
+        method: 'DELETE',
+      }),
+  },
+
+  // Activity Logs
+  activityLogs: {
+    getAll: (userId?: string, targetType?: string, limit?: number) => {
+      const params = new URLSearchParams();
+      if (userId) params.append('userId', userId);
+      if (targetType) params.append('targetType', targetType);
+      if (limit) params.append('limit', limit.toString());
+      return fetchApi(`/activity-logs?${params.toString()}`);
+    },
+    getMyActivity: (limit?: number) => {
+      const params = new URLSearchParams();
+      if (limit) params.append('limit', limit.toString());
+      return fetchApi(`/activity-logs/my-activity?${params.toString()}`);
+    },
+    getOne: (id: string) => fetchApi(`/activity-logs/${id}`),
   },
 
   // Users

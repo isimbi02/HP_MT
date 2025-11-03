@@ -27,34 +27,61 @@ export class DispensationsService {
     }
 
     const requestDate = new Date(checkDto.dispensedDate);
+    const requestDateStart = startOfDay(requestDate);
 
-    // Find the most recent dispensation for this medication and enrollment
-    const lastDispensation = await this.dispensationsRepository.findOne({
-      where: {
-        enrollmentId: checkDto.enrollmentId,
-        medicationId: checkDto.medicationId,
-      },
-      order: { dispensedDate: 'DESC' },
-    });
+    // Build where condition for finding existing dispensations
+    const whereCondition: any = {
+      medicationId: checkDto.medicationId,
+    };
 
-    if (!lastDispensation) {
-      return { eligible: true };
+    if (checkDto.enrollmentId) {
+      whereCondition.enrollmentId = checkDto.enrollmentId;
     }
 
-    const lastDate = new Date(lastDispensation.dispensedDate);
+    if (checkDto.patientId) {
+      whereCondition.patientId = checkDto.patientId;
+    }
 
-    // Check based on frequency
+    // For daily medications, check if there's already a dispensation on the same date
     if (medication.frequency === Frequency.DAILY) {
-      const daysDiff = differenceInDays(startOfDay(requestDate), startOfDay(lastDate));
-      if (daysDiff < 1) {
+      // Calculate the end of the requested day
+      const requestDateEnd = new Date(requestDateStart);
+      requestDateEnd.setHours(23, 59, 59, 999);
+
+      // Check if there's any dispensation on the same date using date range
+      const queryBuilder = this.dispensationsRepository
+        .createQueryBuilder('dispensation')
+        .where('dispensation.medicationId = :medicationId', { medicationId: checkDto.medicationId })
+        .andWhere('dispensation.dispensedDate >= :startDate', { startDate: requestDateStart })
+        .andWhere('dispensation.dispensedDate <= :endDate', { endDate: requestDateEnd });
+
+      if (checkDto.patientId) {
+        queryBuilder.andWhere('dispensation.patientId = :patientId', { patientId: checkDto.patientId });
+      } else if (checkDto.enrollmentId) {
+        queryBuilder.andWhere('dispensation.enrollmentId = :enrollmentId', { enrollmentId: checkDto.enrollmentId });
+      }
+
+      const existingDispensationToday = await queryBuilder.getOne();
+
+      if (existingDispensationToday) {
         return {
           eligible: false,
-          reason: 'Daily medication already collected today',
+          reason: `This daily medication has already been collected today (${requestDate.toLocaleDateString()}). Each medication can only be collected once per day.`,
         };
       }
     } else if (medication.frequency === Frequency.MONTHLY) {
-      const monthsDiff = differenceInMonths(startOfMonth(requestDate), startOfMonth(lastDate));
-      if (monthsDiff < 1) {
+      // For monthly medications, check if already collected this month
+      const requestMonthStart = startOfMonth(requestDate);
+      const existingDispensations = await this.dispensationsRepository.find({
+        where: whereCondition,
+      });
+
+      const hasDispensationThisMonth = existingDispensations.some((disp) => {
+        const dispMonthStart = startOfMonth(new Date(disp.dispensedDate));
+        return dispMonthStart.getTime() === requestMonthStart.getTime();
+      });
+
+      if (hasDispensationThisMonth) {
         return {
           eligible: false,
           reason: 'Monthly medication already collected this month',
@@ -69,6 +96,7 @@ export class DispensationsService {
     // Check eligibility
     const eligibility = await this.checkEligibility({
       enrollmentId: createDispensationDto.enrollmentId,
+      patientId: createDispensationDto.patientId,
       medicationId: createDispensationDto.medicationId,
       dispensedDate: createDispensationDto.dispensedDate,
     });
@@ -77,17 +105,54 @@ export class DispensationsService {
       throw new ConflictException(eligibility.reason);
     }
 
-    const dispensation = this.dispensationsRepository.create({
-      ...createDispensationDto,
-      dispensedById: userId,
+    // Get medication to calculate next due date
+    const medication = await this.medicationsRepository.findOne({
+      where: { id: createDispensationDto.medicationId },
     });
+
+    let nextDueDate: Date | undefined = undefined;
+    if (medication) {
+      const dispensedDate = new Date(createDispensationDto.dispensedDate);
+      if (medication.frequency === Frequency.DAILY) {
+        nextDueDate = new Date(dispensedDate);
+        nextDueDate.setDate(nextDueDate.getDate() + 1);
+      } else if (medication.frequency === Frequency.MONTHLY) {
+        nextDueDate = new Date(dispensedDate);
+        nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+      }
+    }
+
+    const dispensationData: Partial<Dispensation> = {
+      medicationId: createDispensationDto.medicationId,
+      dispensedDate: new Date(createDispensationDto.dispensedDate),
+      quantity: createDispensationDto.quantity,
+      dispensedById: userId,
+    };
+
+    if (createDispensationDto.enrollmentId) {
+      dispensationData.enrollmentId = createDispensationDto.enrollmentId;
+    }
+
+    if (createDispensationDto.patientId) {
+      dispensationData.patientId = createDispensationDto.patientId;
+    }
+
+    if (createDispensationDto.notes) {
+      dispensationData.notes = createDispensationDto.notes;
+    }
+
+    if (nextDueDate) {
+      dispensationData.nextDueDate = nextDueDate;
+    }
+
+    const dispensation = this.dispensationsRepository.create(dispensationData);
 
     return await this.dispensationsRepository.save(dispensation);
   }
 
   async findAll(): Promise<Dispensation[]> {
     return await this.dispensationsRepository.find({
-      relations: ['enrollment', 'enrollment.patient', 'medication', 'dispensedBy'],
+      relations: ['enrollment', 'enrollment.patient', 'patient', 'medication', 'dispensedBy'],
       order: { dispensedDate: 'DESC' },
     });
   }
@@ -95,6 +160,14 @@ export class DispensationsService {
   async findByEnrollment(enrollmentId: string): Promise<Dispensation[]> {
     return await this.dispensationsRepository.find({
       where: { enrollmentId },
+      relations: ['medication', 'dispensedBy'],
+      order: { dispensedDate: 'DESC' },
+    });
+  }
+
+  async findByPatient(patientId: string): Promise<Dispensation[]> {
+    return await this.dispensationsRepository.find({
+      where: { patientId },
       relations: ['medication', 'dispensedBy'],
       order: { dispensedDate: 'DESC' },
     });

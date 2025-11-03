@@ -10,7 +10,9 @@ import {
 } from 'typeorm';
 import { Program} from '../../programs/entities/program.entity';
 import { Dispensation } from '../../dispensations/entities/dispensation.entity';
-import { Frequency } from '../dto/medication.dto'; 
+import { Frequency } from '../dto/medication.dto';
+import { Patient } from '../../patients/entities/patient.entity';
+import { User } from '../../users/entities/user.entity'; 
 
 
 
@@ -34,12 +36,32 @@ export class Medication {
   @Column({ type: 'text', nullable: true })
   instructions: string;
 
-  @ManyToOne(() => Program, (program) => program.medications)
+  @ManyToOne(() => Program, (program) => program.medications, { nullable: true })
   @JoinColumn({ name: 'programId' })
   program: Program;
 
-  @Column()
+  @Column({ nullable: true })
   programId: string;
+
+  @ManyToOne(() => Patient, { nullable: true })
+  @JoinColumn({ name: 'patientId' })
+  patient: Patient;
+
+  @Column({ nullable: true })
+  patientId: string;
+
+  @ManyToOne(() => User, { nullable: true })
+  @JoinColumn({ name: 'prescribedById' })
+  prescribedBy: User;
+
+  @Column({ nullable: true })
+  prescribedById: string;
+
+  @Column({ type: 'date', nullable: true })
+  startDate: Date;
+
+  @Column({ type: 'date', nullable: true })
+  endDate: Date;
 
   @Column({ default: true })
   isActive: boolean;

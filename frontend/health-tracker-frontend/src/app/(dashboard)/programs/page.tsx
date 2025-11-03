@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { api } from '../../lib/api';
 import { Program, UserRole } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
@@ -12,6 +13,7 @@ import { Loading } from '../../components/ui/Loading';
 import { formatDate, formatEnumValue } from '../../lib/utils';
 
 export default function ProgramsPage() {
+  const router = useRouter();
   const [programs, setPrograms] = useState<Program[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
@@ -48,8 +50,17 @@ export default function ProgramsPage() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold text-gray-900">Programs</h1>
-          <p className="text-gray-600 mt-2">Manage health programs and their configurations</p>
+          <button
+            onClick={() => router.back()}
+            className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 mb-2 flex items-center gap-2 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back
+          </button>
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100">Programs</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">Manage health programs and their configurations</p>
         </div>
         {user?.role === UserRole.ADMIN && (
           <Link href="/programs/new">
@@ -105,13 +116,13 @@ export default function ProgramsPage() {
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-4 border-t border-gray-100">
-                <Link href={`/programs/${program.id}`} className="flex-1">
-                  <Button variant="secondary" size="sm" className="w-full">
-                    View Details
-                  </Button>
-                </Link>
-                {user?.role === UserRole.ADMIN && (
+              {user?.role === UserRole.ADMIN && (
+                <div className="flex gap-2 pt-4 border-t border-gray-100">
+                  <Link href={`/programs/${program.id}`} className="flex-1">
+                    <Button variant="secondary" size="sm" className="w-full">
+                      Manage
+                    </Button>
+                  </Link>
                   <Button
                     variant="danger"
                     size="sm"
@@ -119,8 +130,8 @@ export default function ProgramsPage() {
                   >
                     Delete
                   </Button>
-                )}
-              </div>
+                </div>
+              )}
             </Card>
           ))}
         </div>
