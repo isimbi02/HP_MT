@@ -127,27 +127,26 @@ export default function PatientsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-black font-semibold">Patient Number</TableHead>
-                    <TableHead className="text-black font-semibold">Name</TableHead>
-                    <TableHead className="text-black font-semibold">Gender</TableHead>
-                    <TableHead className="text-black font-semibold">Contact</TableHead>
-                    <TableHead className="text-black font-semibold">Status</TableHead>
+                    <TableHead className="text-black dark:text-white font-semibold">Patient Number</TableHead>
+                    <TableHead className="text-black dark:text-white font-semibold">Name</TableHead>
+                    <TableHead className="text-black dark:text-white font-semibold">Gender</TableHead>
+                    <TableHead className="text-black dark:text-white font-semibold">Contact</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {patients.map((patient) => (
                     <TableRow key={patient.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                       <TableCell>
-                        <span className="font-mono text-black font-semibold">
+                        <span className="font-mono text-black dark:text-white font-semibold">
                           {patient.patientNumber}
                         </span>
                       </TableCell>
                       <TableCell>
                         <div>
-                          <p className="font-semibold text-black text-base">
+                          <p className="font-semibold text-black dark:text-white text-base">
                             {patient.firstName} {patient.lastName}
                           </p>
-                          <p className="text-xs text-black mt-0.5">
+                          <p className="text-xs text-black dark:text-white mt-0.5">
                             {formatDate(patient.dateOfBirth)}
                           </p>
                         </div>
@@ -157,21 +156,16 @@ export default function PatientsPage() {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          {patient.phoneNumber && <div className="text-black font-medium">{patient.phoneNumber}</div>}
+                          {patient.phoneNumber && <div className="text-black dark:text-white font-medium">{patient.phoneNumber}</div>}
                           {patient.email && (
                             <div className="flex items-center gap-2 mt-1">
-                              <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <svg className="w-4 h-4 text-gray-400 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                               </svg>
-                              <span className="text-black text-sm font-medium">{patient.email}</span>
+                              <span className="text-black dark:text-white text-sm font-medium">{patient.email}</span>
                             </div>
                           )}
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={patient.isActive ? 'success' : 'gray'} dot>
-                          {patient.isActive ? 'Active' : 'Inactive'}
-                        </Badge>
                       </TableCell>
                     </TableRow>
                   ))}

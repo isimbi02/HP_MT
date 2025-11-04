@@ -228,7 +228,14 @@ export default function ProgramDetailsPage() {
                   </div>
 
                   <div className="flex gap-2">
-                    {isBooked ? (
+                    {user?.role === UserRole.ADMIN ? (
+                      <Badge 
+                        variant={isPast ? 'gray' : 'info'} 
+                        className="w-full justify-center py-2"
+                      >
+                        {isPast ? 'Past Session' : 'Upcoming Session'}
+                      </Badge>
+                    ) : isBooked ? (
                       <>
                         {myBooking?.status === 'booked' && !isPast && (
                           <Button

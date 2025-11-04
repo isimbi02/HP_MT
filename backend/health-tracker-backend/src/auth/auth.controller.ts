@@ -25,6 +25,14 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
+  @Post('guest')
+  @ApiOperation({ summary: 'Login as guest' })
+  @ApiResponse({ status: 200, description: 'Guest login successful', type: LoginResponseDto })
+  @ApiResponse({ status: 401, description: 'Guest access unavailable' })
+  async loginAsGuest() {
+    return this.authService.loginAsGuest();
+  }
+
   @Get('profile')
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth('JWT-auth')

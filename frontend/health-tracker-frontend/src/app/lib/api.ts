@@ -49,6 +49,11 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       }),
+    loginAsGuest: () =>
+      fetchApi('/auth/guest', {
+        method: 'POST',
+        body: JSON.stringify({}),
+      }),
     register: (data: any) =>
       fetchApi('/auth/register', {
         method: 'POST',

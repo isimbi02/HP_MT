@@ -12,7 +12,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const [guestLoading, setGuestLoading] = useState(false);
+  const { login, loginAsGuest } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,6 +27,14 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGuestLogin = () => {
+    setError('');
+    setGuestLoading(true);
+    // loginAsGuest is now synchronous and immediate
+    loginAsGuest();
+    // Note: guestLoading will be reset when component unmounts or redirects
   };
 
   return (
@@ -89,6 +98,17 @@ export default function LoginPage() {
             <Link href="/register" className="font-semibold text-primary-600 hover:text-primary-700 transition-colors">
               Register here
             </Link>
+          </p>
+          <p className="text-sm text-gray-600 mt-3">
+            Or{' '}
+            <button
+              type="button"
+              onClick={handleGuestLogin}
+              disabled={guestLoading}
+              className="font-semibold text-primary-600 hover:text-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {guestLoading ? 'Continuing as guest...' : 'continue as guest'}
+            </button>
           </p>
         </div>
       </div>

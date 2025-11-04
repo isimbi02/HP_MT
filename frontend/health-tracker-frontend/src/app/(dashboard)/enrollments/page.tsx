@@ -38,21 +38,49 @@ export default function EnrollmentsPage() {
     fetchData();
   }, [user, router]);
 
+  // Refresh data when modal opens to ensure we have latest patients and programs
+  useEffect(() => {
+    if (showModal) {
+      // Always refresh data when modal opens to get latest patients and programs
+      fetchData();
+    }
+  }, [showModal]);
+
   const fetchData = async () => {
     try {
       const [enrollmentsData, patientsData, programsData] = await Promise.all([
-        api.enrollments.getAll(),
-        api.patients.getAll(),
-        api.programs.getAll(),
+        api.enrollments.getAll().catch(err => {
+          console.error('Error fetching enrollments:', err);
+          return [];
+        }),
+        api.patients.getAll().catch(err => {
+          console.error('Error fetching patients:', err);
+          return [];
+        }),
+        api.programs.getAll().catch(err => {
+          console.error('Error fetching programs:', err);
+          return [];
+        }),
       ]);
-      setEnrollments(enrollmentsData);
-      setPatients(patientsData);
-      setPrograms(programsData.filter((p: Program) => p.isActive));
+      
+      setEnrollments(Array.isArray(enrollmentsData) ? enrollmentsData : []);
+      
+      // Ensure patients is an array - show ALL patients for enrollment
+      const patientsArray = Array.isArray(patientsData) ? patientsData : [];
+      setPatients(patientsArray);
+      
+      // Show all programs, not just active ones, for enrollment
+      const programsArray = Array.isArray(programsData) ? programsData : [];
+      setPrograms(programsArray);
+      
+      // Debug logging
+      console.log('Fetched patients:', patientsArray.length, patientsArray);
+      console.log('Fetched programs:', programsArray.length, programsArray);
       
       // Fetch session records for each enrollment
       const sessionsMap: Record<string, SessionRecord[]> = {};
       await Promise.all(
-        enrollmentsData.map(async (enrollment: Enrollment) => {
+        (Array.isArray(enrollmentsData) ? enrollmentsData : []).map(async (enrollment: Enrollment) => {
           try {
             const sessions = await api.sessions.getByEnrollment(enrollment.id);
             sessionsMap[enrollment.id] = sessions;
@@ -65,6 +93,10 @@ export default function EnrollmentsPage() {
       setSessionsByEnrollment(sessionsMap);
     } catch (error) {
       console.error('Error fetching data:', error);
+      // Set empty arrays on error to prevent undefined issues
+      setEnrollments([]);
+      setPatients([]);
+      setPrograms([]);
     } finally {
       setLoading(false);
     }
@@ -341,18 +373,26 @@ export default function EnrollmentsPage() {
 
             {/* Form Fields */}
             <div className="space-y-5">
-              <Select
-                label="Select Patient *"
-                value={enrollForm.patientId}
-                onChange={(e) => setEnrollForm({ ...enrollForm, patientId: e.target.value })}
-                options={[
-                  { value: '', label: 'Choose a patient...' },
-                  ...patients.map((p) => ({
-                    value: p.id,
-                    label: `${p.firstName} ${p.lastName} (${p.patientNumber})`,
-                  })),
-                ]}
-              />
+              {patients.length === 0 ? (
+                <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-300">
+                    ⚠️ No patients available. Please create a patient first.
+                  </p>
+                </div>
+              ) : (
+                <Select
+                  label="Select Patient *"
+                  value={enrollForm.patientId}
+                  onChange={(e) => setEnrollForm({ ...enrollForm, patientId: e.target.value })}
+                  options={[
+                    { value: '', label: 'Choose a patient...' },
+                    ...patients.map((p) => ({
+                      value: p.id,
+                      label: `${p.firstName} ${p.lastName} (${p.patientNumber})`,
+                    })),
+                  ]}
+                />
+              )}
 
               {enrollForm.patientId && (
                 <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
@@ -381,18 +421,26 @@ export default function EnrollmentsPage() {
                 </div>
               )}
 
-              <Select
-                label="Select Program *"
-                value={enrollForm.programId}
-                onChange={(e) => setEnrollForm({ ...enrollForm, programId: e.target.value })}
-                options={[
-                  { value: '', label: 'Choose a program...' },
-                  ...programs.map((p) => ({
-                    value: p.id,
-                    label: p.name,
-                  })),
-                ]}
-              />
+              {programs.length === 0 ? (
+                <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-300">
+                    ⚠️ No active programs available. Please create a program first.
+                  </p>
+                </div>
+              ) : (
+                <Select
+                  label="Select Program *"
+                  value={enrollForm.programId}
+                  onChange={(e) => setEnrollForm({ ...enrollForm, programId: e.target.value })}
+                  options={[
+                    { value: '', label: 'Choose a program...' },
+                    ...programs.map((p) => ({
+                      value: p.id,
+                      label: p.name,
+                    })),
+                  ]}
+                />
+              )}
 
               {enrollForm.programId && (
                 <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">

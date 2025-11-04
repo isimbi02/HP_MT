@@ -20,11 +20,12 @@ export default function ProgramsPage() {
 
   useEffect(() => {
     fetchPrograms();
-  }, []);
+  }, [user]);
 
   const fetchPrograms = async () => {
     try {
       const data = await api.programs.getAll();
+      // Show all programs created by admin for everyone
       setPrograms(data);
     } catch (error) {
       console.error('Error fetching programs:', error);
@@ -60,7 +61,11 @@ export default function ProgramsPage() {
             Back
           </button>
           <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100">Programs</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">Manage health programs and their configurations</p>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">
+            {user?.role === UserRole.GUEST 
+              ? 'Browse available health programs and book sessions' 
+              : 'Manage health programs and their configurations'}
+          </p>
         </div>
         {user?.role === UserRole.ADMIN && (
           <Link href="/programs/new">
@@ -97,9 +102,11 @@ export default function ProgramsPage() {
                   </h3>
                   <p className="text-sm text-gray-600 line-clamp-2">{program.description}</p>
                 </div>
-                <Badge variant={program.isActive ? 'success' : 'gray'} dot>
-                  {program.isActive ? 'Active' : 'Inactive'}
-                </Badge>
+                {user?.role !== UserRole.GUEST && (
+                  <Badge variant={program.isActive ? 'success' : 'gray'} dot>
+                    {program.isActive ? 'Active' : 'Inactive'}
+                  </Badge>
+                )}
               </div>
 
               <div className="space-y-2 mb-4">
@@ -111,9 +118,20 @@ export default function ProgramsPage() {
                   <span className="text-gray-500">Sessions:</span>
                   <span className="font-semibold text-gray-900">{program.sessionCount}</span>
                 </div>
-                <div className="text-xs text-gray-500">
-                  Created {formatDate(program.createdAt)}
-                </div>
+                {user?.role !== UserRole.GUEST && (
+                  <div className="text-xs text-gray-500">
+                    Created {formatDate(program.createdAt)}
+                  </div>
+                )}
+                {program.sessionTypes && program.sessionTypes.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {program.sessionTypes.map((type, idx) => (
+                      <Badge key={idx} variant="primary" size="sm" className="capitalize">
+                        {type.replace('_', ' ')}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {user?.role === UserRole.ADMIN && (
@@ -130,6 +148,16 @@ export default function ProgramsPage() {
                   >
                     Delete
                   </Button>
+                </div>
+              )}
+              
+              {user?.role === UserRole.GUEST && (
+                <div className="pt-4 border-t border-gray-100">
+                  <Link href={`/programs/${program.id}`}>
+                    <Button variant="primary" size="sm" className="w-full">
+                      View Details
+                    </Button>
+                  </Link>
                 </div>
               )}
             </Card>

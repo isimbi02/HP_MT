@@ -59,14 +59,14 @@ export default function SessionAttendancePage() {
   const handleRecordSession = async () => {
     try {
       if (editingSession) {
+        // When updating, only send fields allowed by UpdateSessionRecordDto
         await api.sessions.update(editingSession.id, {
-          sessionType: sessionForm.sessionType,
-          scheduledDate: sessionForm.scheduledDate,
           status: sessionForm.status,
           notes: sessionForm.notes,
           cancellationReason: sessionForm.status === AttendanceStatus.CANCELLED ? sessionForm.cancellationReason : undefined,
         });
       } else {
+        // When creating, send all required fields
         await api.sessions.create({
           enrollmentId,
           sessionType: sessionForm.sessionType,
@@ -109,7 +109,6 @@ export default function SessionAttendancePage() {
     setSessionForm({
       sessionType: SessionType.ONE_ON_ONE,
       scheduledDate: new Date().toISOString().split('T')[0],
-      status: AttendanceStatus.MISSED,
       notes: '',
       cancellationReason: '',
     });
@@ -126,10 +125,6 @@ export default function SessionAttendancePage() {
       : '0',
   };
 
-  if (loading) return <Loading />;
-  if (user?.role !== UserRole.STAFF && user?.role !== UserRole.ADMIN) return null;
-  if (!enrollment) return <div>Enrollment not found</div>;
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'attended': return 'attended';
@@ -138,6 +133,11 @@ export default function SessionAttendancePage() {
       default: return 'gray';
     }
   };
+
+  if (loading) return <Loading />;
+  if (user?.role !== UserRole.STAFF && user?.role !== UserRole.ADMIN) return null;
+  if (!enrollment) return <div>Enrollment not found</div>;
+
 
   return (
     <div className="space-y-6 animate-fade-in bg-gray-50 dark:bg-gray-900 min-h-screen pb-8">

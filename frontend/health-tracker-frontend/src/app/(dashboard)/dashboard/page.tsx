@@ -171,7 +171,7 @@ export default function DashboardPage() {
             <>
               <ActionCard
                 title="Program Management"
-                description="Create and manage health programs, define sessions, and track bookings"
+                description="Create and manage health programs"
                 href="/admin/program-management"
                 icon="⚙️"
                 color="red"
@@ -179,7 +179,7 @@ export default function DashboardPage() {
               />
               <ActionCard
                 title="Manage Users"
-                description="Create and manage user accounts, assign roles, and control access"
+                description="View users and control access to the system"
                 href="/users"
                 icon="👥"
                 color="blue"
@@ -193,7 +193,7 @@ export default function DashboardPage() {
               />
               <ActionCard
                 title="Manage Enrollments"
-                description="View patients and their enrolled programs, track sessions, manage medications, and enroll patients into new programs"
+                description="View and manage patients enrollments"
                 href="/enrollments"
                 icon="📋"
                 color="orange"
@@ -204,7 +204,7 @@ export default function DashboardPage() {
             <>
               <ActionCard
                 title="Manage Medications"
-                description="View all medications and dispense to patients with duplicate prevention"
+                description="View all medications and assign medication to patients"
                 href="/medications"
                 icon="💊"
                 color="purple"
@@ -212,7 +212,7 @@ export default function DashboardPage() {
               />
               <ActionCard
                 title="Medication Dispensation"
-                description="Dispense medications to patients with automatic duplicate prevention"
+                description="Dispense medication to patients and view dispensations"
                 href="/staff/medication-dispensation"
                 icon="💉"
                 color="green"

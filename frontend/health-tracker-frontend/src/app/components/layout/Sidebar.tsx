@@ -8,7 +8,9 @@ import { cn } from '../../lib/utils';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: '📊', roles: [UserRole.ADMIN, UserRole.STAFF, UserRole.GUEST, UserRole.PATIENT] },
-  { name: 'Programs', href: '/programs', icon: '🏥', roles: [UserRole.ADMIN, UserRole.STAFF, UserRole.GUEST] },
+  { name: 'Programs', href: '/programs', icon: '🏥', roles: [UserRole.ADMIN, UserRole.STAFF, UserRole.GUEST, UserRole.PATIENT] },
+  { name: 'Enrolled Programs', href: '/patient/enrolled-programs', icon: '📋', roles: [UserRole.PATIENT] },
+  { name: 'My Medications', href: '/patient/my-medications', icon: '💊', roles: [UserRole.PATIENT] },
   { name: 'Program Management', href: '/admin/program-management', icon: '⚙️', roles: [UserRole.ADMIN] },
   { name: 'Patients', href: '/patients', icon: '👤', roles: [UserRole.ADMIN, UserRole.STAFF] },
   { name: 'Enrollments', href: '/enrollments', icon: '📋', roles: [UserRole.ADMIN, UserRole.STAFF] },

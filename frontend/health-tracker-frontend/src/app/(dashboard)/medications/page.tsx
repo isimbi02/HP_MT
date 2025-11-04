@@ -166,12 +166,12 @@ export default function MedicationsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-black font-semibold">Name</TableHead>
-                  <TableHead className="text-black font-semibold">Dose</TableHead>
-                  <TableHead className="text-black font-semibold">Frequency</TableHead>
-                  <TableHead className="text-black font-semibold">Program</TableHead>
+                  <TableHead className="text-black dark:text-white font-semibold">Name</TableHead>
+                  <TableHead className="text-black dark:text-white font-semibold">Dose</TableHead>
+                  <TableHead className="text-black dark:text-white font-semibold">Frequency</TableHead>
+                  <TableHead className="text-black dark:text-white font-semibold">Program</TableHead>
                   {user?.role === UserRole.ADMIN && (
-                    <TableHead className="text-black font-semibold">Actions</TableHead>
+                    <TableHead className="text-black dark:text-white font-semibold">Actions</TableHead>
                   )}
                 </TableRow>
               </TableHeader>
@@ -179,16 +179,16 @@ export default function MedicationsPage() {
                 {medications.map((medication) => (
                   <TableRow key={medication.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                     <TableCell>
-                      <span className="font-semibold text-black text-base">{medication.name}</span>
+                      <span className="font-semibold text-black dark:text-white text-base">{medication.name}</span>
                     </TableCell>
                     <TableCell>
-                      <span className="text-black">{medication.dose}</span>
+                      <span className="text-black dark:text-white">{medication.dose}</span>
                     </TableCell>
                     <TableCell>
-                      <span className="text-black">{formatEnumValue(medication.frequency)}</span>
+                      <span className="text-black dark:text-white">{formatEnumValue(medication.frequency)}</span>
                     </TableCell>
                     <TableCell>
-                      <span className="text-black">{medication.program?.name || 'N/A'}</span>
+                      <span className="text-black dark:text-white">{medication.program?.name || 'N/A'}</span>
                     </TableCell>
                     {user?.role === UserRole.ADMIN && (
                       <TableCell>

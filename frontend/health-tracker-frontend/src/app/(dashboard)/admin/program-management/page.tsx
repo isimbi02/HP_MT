@@ -95,7 +95,7 @@ export default function ProgramManagementPage() {
           <Button
             size="lg"
             onClick={() => setShowModal(true)}
-            className="!bg-red-600 hover:!bg-red-700 !text-white shadow-lg hover:shadow-xl transition-all duration-200 font-semibold px-6 py-3 rounded-xl border-0"
+            className="!bg-blue-600 hover:!bg-blue-700 !text-white shadow-lg hover:shadow-xl transition-all duration-200 font-semibold px-6 py-3 rounded-xl border-0"
           >
             <svg className="w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />

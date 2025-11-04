@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { api } from '../../lib/api';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
@@ -15,6 +16,7 @@ import { TextArea } from '../ui/TextArea';
 
 export function PatientDashboard() {
   const { user } = useAuth();
+  const router = useRouter();
   const [data, setData] = useState<any>(null);
   const [programs, setPrograms] = useState<Program[]>([]);
   const [availableSessions, setAvailableSessions] = useState<ProgramSession[]>([]);
@@ -27,6 +29,7 @@ export function PatientDashboard() {
   const [selectedBooking, setSelectedBooking] = useState<SessionBooking | null>(null);
   const [cancelReason, setCancelReason] = useState('');
   const [patientId, setPatientId] = useState<string | null>(null);
+  const [showRegisterPrompt, setShowRegisterPrompt] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -35,25 +38,35 @@ export function PatientDashboard() {
   const fetchDashboardData = async () => {
     try {
       if (user?.role === UserRole.GUEST) {
-        // For guests, fetch programs and sessions
-        const [programsData, bookingsData] = await Promise.all([
-          api.programs.getAll(),
-          user?.id ? api.sessionBookings.getMyBookings() : Promise.resolve([]),
-        ]);
-        setPrograms(programsData.filter((p: Program) => p.isActive));
-        setMyBookings(bookingsData);
-        
-        // Fetch sessions for all programs
-        const sessionsPromises = programsData
-          .filter((p: Program) => p.isActive)
-          .map((p: Program) => api.programSessions.getAll(p.id).catch(() => []));
-        const sessionsArrays = await Promise.all(sessionsPromises);
-        const allSessions = sessionsArrays.flat();
-        setAvailableSessions(allSessions.filter((s: ProgramSession) => {
-          const sessionDate = new Date(s.scheduledDate);
-          return sessionDate >= new Date() && s.bookedCount < s.capacity;
-        }));
-        setData({});
+        // For guests, fetch programs and sessions (public endpoints)
+        try {
+          const programsData = await api.programs.getAll();
+          // Show all programs created by admin
+          setPrograms(programsData);
+          
+          // Fetch sessions for all programs
+          const activePrograms = programsData.filter((p: Program) => p.isActive);
+          if (activePrograms.length > 0) {
+            const sessionsPromises = activePrograms.map((p: Program) => 
+              api.programSessions.getAll(p.id).catch(() => [])
+            );
+            const sessionsArrays = await Promise.all(sessionsPromises);
+            const allSessions = sessionsArrays.flat();
+            setAvailableSessions(allSessions.filter((s: ProgramSession) => {
+              const sessionDate = new Date(s.scheduledDate);
+              return sessionDate >= new Date() && s.bookedCount < s.capacity;
+            }));
+          }
+          setMyBookings([]); // Guests don't have bookings
+          setData({});
+        } catch (error) {
+          console.error('Error fetching guest data:', error);
+          // Set empty arrays on error so UI doesn't break
+          setPrograms([]);
+          setAvailableSessions([]);
+          setMyBookings([]);
+          setData({});
+        }
       } else if (user?.role === UserRole.PATIENT) {
         // For patients, fetch dashboard data and all programs
         const [dashboardData, programsData, bookingsData] = await Promise.all([
@@ -98,6 +111,12 @@ export function PatientDashboard() {
   };
 
       const handleBookSession = async (sessionId: string) => {
+    // For guests, show registration prompt instead of booking
+    if (user?.role === UserRole.GUEST) {
+      setShowRegisterPrompt(true);
+      return;
+    }
+    
     if (!user?.id) {
       alert('Please login to book a session');
       return;
@@ -110,7 +129,7 @@ export function PatientDashboard() {
       }
       await api.sessionBookings.create(bookingData);
       // Immediately refresh bookings
-      if (user?.role === UserRole.GUEST || user?.role === UserRole.PATIENT) {
+      if (user?.role === UserRole.PATIENT) {
         const bookingsData = await api.sessionBookings.getMyBookings();
         setMyBookings(bookingsData);
         // Close program selection and show bookings list
@@ -211,7 +230,11 @@ export function PatientDashboard() {
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">My Dashboard</h1>
-            <p className="text-green-100 dark:text-gray-300">Track your programs, sessions, and medications</p>
+            <p className="text-green-100 dark:text-gray-300">
+              {user?.role === UserRole.GUEST 
+                ? 'View available programs' 
+                : 'Track your programs, sessions, and medications'}
+            </p>
           </div>
           
           {/* Role Display Card */}
@@ -274,13 +297,6 @@ export function PatientDashboard() {
                 icon="🏥"
                 color="green"
               />
-              <ActionCard
-                title="My Bookings"
-                description={`View and manage your ${myBookings.length} booked session${myBookings.length !== 1 ? 's' : ''}`}
-                onClick={() => setShowBookingsModal(true)}
-                icon="📅"
-                color="blue"
-              />
             </>
           ) : user?.role === UserRole.PATIENT ? (
             <>
@@ -312,6 +328,47 @@ export function PatientDashboard() {
           )}
         </div>
       </div>
+
+      {/* Available Programs - For Guests */}
+      {user?.role === UserRole.GUEST && programs.length > 0 && (
+        <Card title="🏥 Available Programs" className="mx-6">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            Browse all available health programs. Click on a program to view and book available sessions.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {programs.map((program) => {
+              return (
+                <div
+                  key={program.id}
+                  className="p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl border border-green-200 dark:border-green-800 hover:shadow-lg transition-all cursor-pointer"
+                  onClick={() => fetchProgramSessions(program.id)}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg">{program.name}</h3>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">{program.description}</p>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    <Badge variant="info" size="sm">{program.sessionFrequency}</Badge>
+                    {program.sessionTypes?.map((type, idx) => (
+                      <Badge key={idx} variant="primary" size="sm" className="capitalize">{type.replace('_', ' ')}</Badge>
+                    ))}
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      fetchProgramSessions(program.id);
+                    }}
+                    className="w-full !bg-blue-600 hover:!bg-blue-700 !text-white border-0"
+                  >
+                    View Sessions
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
 
       {/* Available Programs - For Patients */}
       {user?.role === UserRole.PATIENT && programs.length > 0 && (
@@ -489,8 +546,8 @@ export function PatientDashboard() {
         </Card>
       )}
 
-      {/* My Bookings */}
-      {(data?.myBookings && data.myBookings.length > 0) || (myBookings.length > 0) ? (
+      {/* My Bookings - Only for Patients (not guests) */}
+      {user?.role !== UserRole.GUEST && ((data?.myBookings && data.myBookings.length > 0) || (myBookings.length > 0)) ? (
         <Card title="📌 My Bookings" className="mx-6">
           <div className="space-y-4">
             {(data?.myBookings || myBookings).map((booking: any) => (
@@ -510,7 +567,7 @@ export function PatientDashboard() {
                       <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">📍 {booking.session.location}</p>
                     )}
                   </div>
-                  {(user?.role === UserRole.GUEST || user?.role === UserRole.PATIENT) && booking.status === 'booked' && (
+                  {user?.role === UserRole.PATIENT && booking.status === 'booked' && (
                     <Button
                       variant="danger"
                       size="sm"
@@ -649,8 +706,8 @@ export function PatientDashboard() {
         </Modal>
       )}
 
-      {/* My Bookings Modal - For Guests and Patients */}
-      {(user?.role === UserRole.GUEST || user?.role === UserRole.PATIENT) && (
+      {/* My Bookings Modal - For Patients only */}
+      {user?.role === UserRole.PATIENT && (
         <Modal
           isOpen={showBookingsModal}
           onClose={() => {
@@ -861,6 +918,61 @@ export function PatientDashboard() {
               </Button>
               <Button variant="danger" onClick={handleCancelBooking} className="flex-1">
                 Cancel Booking
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Register Prompt Modal - For Guests */}
+      {user?.role === UserRole.GUEST && (
+        <Modal
+          isOpen={showRegisterPrompt}
+          onClose={() => setShowRegisterPrompt(false)}
+          title="Create an Account"
+          size="md"
+        >
+          <div className="space-y-4">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                Create an Account to Book Sessions
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                To book a session, you'll need to create an account with us. It only takes a minute!
+              </p>
+            </div>
+            
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
+              <p className="text-sm text-blue-900 dark:text-blue-300 font-semibold mb-2">Benefits of creating an account:</p>
+              <ul className="text-sm text-blue-800 dark:text-blue-400 space-y-1 list-disc list-inside">
+                <li>Book and manage your sessions</li>
+                <li>Track your health program progress</li>
+                <li>Receive important updates</li>
+                <li>Access your medication schedule</li>
+              </ul>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                variant="secondary"
+                onClick={() => setShowRegisterPrompt(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowRegisterPrompt(false);
+                  router.push('/register');
+                }}
+                className="flex-1"
+              >
+                Create Account
               </Button>
             </div>
           </div>

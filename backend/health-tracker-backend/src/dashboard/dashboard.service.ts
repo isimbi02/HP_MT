@@ -11,7 +11,8 @@ import { ProgramSession } from '../program-sessions/entities/program-sessions.en
 import { SessionBooking, BookingStatus } from '../session-bookings/entities/session-booking.entity';
 import { Medication } from '../medications/entities/medication.entity';
 import { User, UserRole } from '../users/entities/user.entity';
-import { startOfDay, subDays, format, addDays, startOfMonth, endOfMonth } from 'date-fns';
+import { Frequency } from '../medications/dto/medication.dto';
+import { startOfDay, subDays, format, addDays, startOfMonth, endOfMonth, startOfWeek } from 'date-fns';
 
 @Injectable()
 export class DashboardService {
@@ -155,10 +156,16 @@ export class DashboardService {
       }),
       this.dispensationsRepository.find({
         relations: ['enrollment', 'enrollment.patient', 'patient', 'medication', 'dispensedBy'],
-        take: 10,
+        take: 50, // Get more to filter duplicates
         order: { createdAt: 'DESC' },
       }),
     ]);
+
+    // Filter duplicate dispensations based on medication frequency
+    const filteredDispensations = this.filterDuplicateDispensations(recentDispensations);
+    
+    // Debug: Log filtering results
+    console.log(`[Dashboard] Filtered ${recentDispensations.length} dispensations to ${filteredDispensations.length} unique entries`);
 
     return {
       recentSessions: recentSessions.map((session) => ({
@@ -171,7 +178,7 @@ export class DashboardService {
         recordedBy: `${session.recordedBy.firstName} ${session.recordedBy.lastName}`,
         createdAt: session.createdAt,
       })),
-      recentDispensations: recentDispensations.map((dispensation) => ({
+      recentDispensations: filteredDispensations.slice(0, 10).map((dispensation) => ({
         id: dispensation.id,
         patient: dispensation.patient
           ? `${dispensation.patient.firstName} ${dispensation.patient.lastName}`
@@ -186,6 +193,91 @@ export class DashboardService {
     };
   }
 
+  private filterDuplicateDispensations(dispensations: Dispensation[]): Dispensation[] {
+    if (!dispensations || dispensations.length === 0) {
+      return [];
+    }
+
+    // Group dispensations by medication, patient, and frequency period
+    // Reverse array to process from oldest to newest, so we keep the FIRST (oldest) dispensation
+    const reversed = [...dispensations].reverse();
+    const seen = new Map<string, Dispensation>();
+
+    for (const dispensation of reversed) {
+      // Get patient ID - try direct patientId first, then enrollment.patient
+      const patientId = dispensation.patientId || 
+                       (dispensation.enrollment?.patient?.id) || 
+                       (dispensation.enrollment?.patientId);
+      
+      const medicationId = dispensation.medicationId;
+      const medication = dispensation.medication;
+      const frequency = medication?.frequency;
+      
+      // Handle dispensedDate - it might be a Date object or string
+      let dispensedDate: Date;
+      if (dispensation.dispensedDate instanceof Date) {
+        dispensedDate = dispensation.dispensedDate;
+      } else if (typeof dispensation.dispensedDate === 'string') {
+        dispensedDate = new Date(dispensation.dispensedDate);
+      } else {
+        // Fallback to createdAt if dispensedDate is invalid
+        dispensedDate = dispensation.createdAt instanceof Date 
+          ? dispensation.createdAt 
+          : new Date(dispensation.createdAt);
+      }
+
+      // If we can't determine the key, include it as-is
+      if (!patientId || !medicationId || !frequency) {
+        const key = `${medicationId}-${patientId}-${dispensation.id}`;
+        if (!seen.has(key)) {
+          seen.set(key, dispensation);
+        }
+        continue;
+      }
+
+      // Create a key based on frequency period
+      let periodKey: string;
+      
+      try {
+        if (frequency === Frequency.DAILY) {
+          // Group by day - use date string format for consistent key
+          const dayStart = startOfDay(dispensedDate);
+          const dateStr = dayStart.toISOString().split('T')[0]; // YYYY-MM-DD format
+          periodKey = `${medicationId}-${patientId}-${dateStr}`;
+        } else if (frequency === Frequency.WEEKLY) {
+          // Group by week
+          const weekStart = startOfWeek(dispensedDate, { weekStartsOn: 1 }); // Monday
+          const dateStr = weekStart.toISOString().split('T')[0];
+          periodKey = `${medicationId}-${patientId}-${dateStr}`;
+        } else if (frequency === Frequency.MONTHLY) {
+          // Group by month
+          const monthStart = startOfMonth(dispensedDate);
+          const dateStr = monthStart.toISOString().split('T')[0];
+          periodKey = `${medicationId}-${patientId}-${dateStr}`;
+        } else {
+          // Unknown frequency, include all
+          periodKey = `${medicationId}-${patientId}-${dispensation.id}`;
+        }
+      } catch (error) {
+        // If date parsing fails, use unique key
+        periodKey = `${medicationId}-${patientId}-${dispensation.id}`;
+      }
+
+      // Only keep the FIRST (oldest) dispensation for each period
+      // Since we reversed the array, the first one we encounter is the oldest
+      if (!seen.has(periodKey)) {
+        seen.set(periodKey, dispensation);
+      }
+    }
+
+    // Convert back to array and sort by createdAt DESC for display
+    return Array.from(seen.values()).sort((a, b) => {
+      const dateA = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt);
+      const dateB = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt);
+      return dateB.getTime() - dateA.getTime();
+    });
+  }
+
   async getPatientDashboard(userId: string) {
     const user = await this.usersRepository.findOne({
       where: { id: userId },
@@ -196,9 +288,30 @@ export class DashboardService {
     }
 
     // Find patient by matching email (if user is a patient/guest, their email might match a patient email)
-    const patient = await this.patientsRepository.findOne({
+    let patient = await this.patientsRepository.findOne({
       where: { email: user.email },
     });
+
+    // If not found by email, try to find via bookings (if user has bookings, they might have a patientId)
+    if (!patient) {
+      const bookingWithPatient = await this.bookingsRepository.findOne({
+        where: { userId },
+        relations: ['patient'],
+      });
+      if (bookingWithPatient?.patient) {
+        patient = bookingWithPatient.patient;
+      }
+    }
+
+    // If still not found, try matching by firstName and lastName
+    if (!patient) {
+      patient = await this.patientsRepository.findOne({
+        where: { 
+          firstName: user.firstName,
+          lastName: user.lastName 
+        },
+      });
+    }
 
     // Get patient's enrollments (if patient found)
     const enrollments = patient
