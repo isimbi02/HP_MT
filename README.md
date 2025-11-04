@@ -96,7 +96,6 @@ npm run seed
 This creates initial users:
 - **Admin**: `admin@healthtracker.com` / `Admin@123`
 - **Staff**: `staff@healthtracker.com` / `Staff@123`
-- **Guest**: `guest@healthtracker.com` / `Guest@123`
 - **Patients**: `patient1@healthtracker.com` / `Patient@123`, etc.
 
 ### 6. Run the Application
@@ -145,9 +144,9 @@ HP_MT/
 ## 👥 User Roles
 
 - **Admin**: Full system access - manage programs, users, patients, enrollments
-- **Staff**: Patient tracking, session attendance, medication dispensation
+- **Staff**: Patient tracking, program enrollment , medication dispensation
 - **Patient**: View programs, book sessions for enrolled programs
-- **Guest**: Browse available programs
+- **Guest**: Browse available programs and doesn't need to have an account
 
 ## 📝 Key Features Explained
 
