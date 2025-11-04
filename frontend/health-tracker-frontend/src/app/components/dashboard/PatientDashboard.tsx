@@ -110,6 +110,37 @@ export function PatientDashboard() {
     }
   };
 
+  const handleExportProgress = async () => {
+    if (!patientId) {
+      alert('Patient information not available. Please refresh the page.');
+      return;
+    }
+
+    // Get patient name from enrollments
+    let patientName = 'Patient';
+    if (data?.enrollments && data.enrollments.length > 0) {
+      const firstEnrollment = data.enrollments[0];
+      if (firstEnrollment.patient?.firstName && firstEnrollment.patient?.lastName) {
+        patientName = `${firstEnrollment.patient.firstName}-${firstEnrollment.patient.lastName}`;
+      }
+    }
+
+    try {
+      const blob = await api.dashboard.exportProgress(patientId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${patientName}-progress-report.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error: any) {
+      console.error('Error exporting progress:', error);
+      alert(error.message || 'Failed to export progress report. Please try again.');
+    }
+  };
+
       const handleBookSession = async (sessionId: string) => {
     // For guests, show registration prompt instead of booking
     if (user?.role === UserRole.GUEST) {
@@ -255,7 +286,25 @@ export function PatientDashboard() {
       {/* Progress Summary - Only for Patients */}
       {user?.role === UserRole.PATIENT && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-6">
-          <Card title="📊 Progress Summary" className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20">
+          <Card 
+            title="📊 Progress Summary" 
+            className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20"
+            action={
+              patientId && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleExportProgress}
+                  className="!bg-blue-600 hover:!bg-blue-700 !text-white"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Export Progress
+                </Button>
+              )
+            }
+          >
             <div className="space-y-4">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Sessions Attended</p>
